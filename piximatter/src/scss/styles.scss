@@ -1,0 +1,45 @@
+.piximatter {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-flow: row wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.piximatter__canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.piximatter__canvas--pixi {
+  background: #7460E1;
+}
+
+.piximatter__canvas--matter {
+  z-index: 1;
+  opacity: 1;
+}
+
+.piximatter__message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #7460E1;
+  font-family: "Comic Sans MS", cursive, sans-serif; // There's a time and place for everything.
+  font-size: .75rem;
+}
+
+.center {
+  margin: auto;
+}

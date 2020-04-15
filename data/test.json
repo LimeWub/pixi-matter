@@ -1,0 +1,77 @@
+[
+  {
+    "id": "poly",
+    "amount": 1,
+    "type": "polygon",
+    "config": {
+      "diameter": 120,
+      "sides": 6,
+      "position": {
+        "x": 100,
+        "y": 130
+      },
+      "matter_config": {
+        "chamfer": { "radius": 10 }
+      },
+      "pixi_config": {
+        "fill": {
+          "color": "0xffffff"
+        },
+        "line": {
+          "width": 2,
+          "color": "0xff00ff"
+        }
+      }
+    }
+  },
+  {
+    "id": "circ",
+    "amount": 1,
+    "type": "circle",
+    "config": {
+      "diameter": 100,
+      "position": {
+        "x": 100,
+        "y": 130
+      },
+      "matter_config": {
+        "chamfer": { "radius": 10 }
+      },
+      "pixi_config": {
+        "fill": {
+          "color": "0xffffff"
+        },
+        "line": {
+          "width": 2,
+          "color": "0xff00ff"
+        }
+      }
+    }
+  },
+
+  {
+    "id": "rect",
+    "amount": 3,
+    "type": "rectangle",
+    "config": {
+      "width": 30,
+      "height": 80,
+      "position": {
+        "x": 130,
+        "y": 130
+      },
+      "matter_config": {
+        "chamfer": { "radius": 10 }
+      },
+      "pixi_config": {
+        "fill": {
+          "color": "0xffffff"
+        },
+        "line": {
+          "width": 2,
+          "color": "0xff00ff"
+        }
+      }
+    }
+  }
+]
