@@ -1,6 +1,5 @@
 import { Shape } from "./_.js";
 import * as Matter from "matter-js";
-import * as PIXI from "pixi.js";
 
 export class Rectangle extends Shape {
   constructor({ config } = {}) {
@@ -13,7 +12,11 @@ export class Rectangle extends Shape {
   }
 
   init() {
-    // Not Poly coz diff width n height
+    this.doMatter();
+    this.doPixi();
+  }
+
+  doMatter() {
     const matter = Matter.Bodies.rectangle(
       this._config.position.x,
       this._config.position.y,
@@ -25,28 +28,6 @@ export class Rectangle extends Shape {
     );
     this._matter = matter;
 
-    const pixi = new PIXI.Graphics();
-    this._pixi = pixi;
-    this.style();
-
-    // Matter draws from center so we know
-    // its position we is the center.
-    // Very important for pixi line drawing
-    const centerPoint = {
-      x: matter.position.x,
-      y: matter.position.y
-    };
-
-    pixi.moveTo(
-      matter.vertices[0].x - centerPoint.x,
-      matter.vertices[0].y - centerPoint.y
-    );
-    for (let i = 1; i < matter.vertices.length; i++) {
-      pixi.lineTo(
-        matter.vertices[i].x - centerPoint.x,
-        matter.vertices[i].y - centerPoint.y
-      );
-    }
-    pixi.closePath();
+    matter.isInitialised = true;
   }
 }

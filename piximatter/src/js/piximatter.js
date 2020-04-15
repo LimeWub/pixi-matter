@@ -3,12 +3,13 @@ import * as PIXI from "pixi.js";
 import { Circle } from "./shapes/circle.js";
 import { Rectangle } from "./shapes/rectangle.js";
 import { Polygon } from "./shapes/polygon.js";
+import { Vertices } from "./shapes/vertices.js";
 import { getWallsData } from "./_util/getWallsData.js";
 // var pathseg = require("pathseg"); // I think Matter needs this?
 
 import "../scss/styles.scss";
 
-export const PixiMatter = function({
+export const PixiMatter = function ({
   element,
   pixi_config = {},
   matter_config = {},
@@ -18,13 +19,13 @@ export const PixiMatter = function({
   data,
   copy = {
     init: "Initializing",
-    resize: "Resizing"
-  }
+    resize: "Resizing",
+  },
 }) {
   const BLOCK_ELEMENT_CLASSNAME = "piximatter";
 
   this._element = {
-    boundingClientRect: element.getBoundingClientRect()
+    boundingClientRect: element.getBoundingClientRect(),
   };
 
   this._dom = {};
@@ -102,7 +103,7 @@ export const PixiMatter = function({
       antialias: true,
       resolution: 2,
       transparent: true,
-      ...pixi_config
+      ...pixi_config,
     });
 
     app.stage = new PIXI.Container();
@@ -129,8 +130,8 @@ export const PixiMatter = function({
         wireframes: true,
         showAngleIndicator: false,
         background: "transparent",
-        wireframeBackground: "transparent"
-      }
+        wireframeBackground: "transparent",
+      },
     });
     Matter.Render.run(renderer);
 
@@ -141,9 +142,9 @@ export const PixiMatter = function({
         constraint: {
           stiffness: 0.2,
           render: {
-            visible: true
-          }
-        }
+            visible: true,
+          },
+        },
       });
 
     Matter.World.add(engine.world, mouseConstraint);
@@ -155,44 +156,59 @@ export const PixiMatter = function({
     this._matter.renderer = renderer;
   };
 
-  this.addBodies = data => {
+  this.addBody = ({ data, parentContainer: pc }) => {
+    const app = this._pixi.app;
+    const parentContainer = pc || app.stage;
+
+    const engine = this._matter.engine;
+
+    let b;
+    switch (data.type) {
+      case "circle":
+        b = new Circle({ config: data.config });
+        break;
+      case "rectangle":
+        b = new Rectangle({ config: data.config });
+        break;
+      case "polygon":
+        b = new Polygon({ config: data.config });
+        break;
+      case "vertices":
+        b = new Vertices({ config: data.config });
+        break;
+      default:
+        console.log("SAD");
+        return;
+    }
+
+    if (!(b && b._matter.isInitialised && b._pixi.isInitialised)) return;
+
+    Matter.World.add(engine.world, b._matter);
+    b._pixi.parentContainer = parentContainer;
+    parentContainer.addChild(b._pixi);
+
+    return { id: data.id, type: data.type, shape: b };
+  };
+
+  this.addBodies = ({ data }) => {
     const app = this._pixi.app;
     const parentContainer = app.stage; // (!): No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
-    const engine = this._matter.engine;
     const bodies = this._bodies;
 
-    const adder = data => {
+    const adder = (data) => {
       const bodies = [];
-      data.forEach(d => {
-        let b;
-        switch (d.type) {
-          // (!) Special type: Collection
-          case "collection":
-            bodies.push({
-              id: d.id,
-              type: d.type,
-              bodies: adder(d.config.bodies)
-            });
-            return; // END IT HERE FOR `collection`
-          case "circle":
-            b = new Circle({ config: d.config });
-            break;
-          case "rectangle":
-            b = new Rectangle({ config: d.config });
-            break;
-          case "polygon":
-            b = new Polygon({ config: d.config });
-            break;
-          case "":
-          case "":
-          default:
-            console.log("SAD");
-          // cannot read property 'matter' of undefined (BOOM)
+      data.forEach((d) => {
+        if (d.type === "collection") {
+          bodies.push({
+            id: d.id,
+            type: d.type,
+            bodies: adder(d.config.bodies),
+          });
+          return; // END IT HERE FOR `collection`
         }
-        bodies.push({ id: d.id, type: d.type, shape: b });
-        Matter.World.add(engine.world, b._matter);
-        b._pixi.parentContainer = parentContainer;
-        parentContainer.addChild(b._pixi);
+
+        const body = this.addBody({ data: d, parentContainer });
+        if (body) bodies.push(body);
       });
       return bodies;
     };
@@ -200,7 +216,11 @@ export const PixiMatter = function({
     this._bodies = [...bodies, ...adder(data)];
   };
 
-  this.deleteBodies = (iteratee, greedy = false) => {
+  this.deleteBody = ({ iteratee }) => {
+    this.deleteBodies({ iteratee, greedy: false });
+  };
+
+  this.deleteBodies = ({ iteratee, greedy = true }) => {
     const app = this._pixi.app;
     const parentContainer = app.stage; // No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
     const engine = this._matter.engine;
@@ -209,7 +229,7 @@ export const PixiMatter = function({
 
     const deleter = (bodies, iteratee) => {
       const newBodies = [];
-      bodies.forEach(b => {
+      bodies.forEach((b) => {
         // Greed check
         if (!greedy && matchCount > 1) {
           newBodies.push(b);
@@ -256,8 +276,8 @@ export const PixiMatter = function({
   };
 
   this.setBodies = ({ data }) => {
-    this.deleteBodies(() => true, true); // Trash 'em all
-    this.addBodies(data);
+    this.deleteBodies({ iteratee: () => true }); // Trash 'em all
+    this.addBodies({ data });
   };
 
   this.initTicker = () => {
@@ -268,7 +288,7 @@ export const PixiMatter = function({
     let g_Time = 0;
 
     // Listen for animate update
-    app.ticker.add(delta => {
+    app.ticker.add((delta) => {
       if (this.isResizing) return; // Don't do anything if resizing.
       // Limit to the frame rate
       const timeNow = new Date().getTime();
@@ -280,8 +300,8 @@ export const PixiMatter = function({
       // TMP:
       Matter.Engine.update(engine, delta * 1.6666); // Ummmm
 
-      const ticker = bodies => {
-        bodies.forEach(b => {
+      const ticker = (bodies) => {
+        bodies.forEach((b) => {
           // (!) Special: Collection
           if (b.type === "collection") {
             ticker(b.bodies);
@@ -291,7 +311,7 @@ export const PixiMatter = function({
           const shape = b.shape;
           shape.fromMatterToPixi();
           if (!shape.isInBounds(renderer.bounds)) {
-            this.deleteBodies(body => body.id === b.id);
+            this.deleteBodies({ iteratee: (body) => body.id === b.id });
           }
         });
       };
@@ -311,10 +331,9 @@ export const PixiMatter = function({
     const bcr = element.getBoundingClientRect();
     this._element.bcr = bcr; // update bcr
 
-    // this needs to update (and I need to know what to remove. o lord.) on resize. WTF.
-    this.deleteBodies(b => b.id === "walls");
+    this.deleteBodies({ iteratee: (b) => b.id === "walls" });
     if (walls) {
-      this.addBodies(getWallsData(bcr));
+      this.addBodies({ data: getWallsData(bcr) });
       console.log(this._bodies);
     }
 

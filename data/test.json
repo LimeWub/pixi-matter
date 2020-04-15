@@ -48,7 +48,6 @@
       }
     }
   },
-
   {
     "id": "rect",
     "amount": 3,
@@ -62,6 +61,61 @@
       },
       "matter_config": {
         "chamfer": { "radius": 10 }
+      },
+      "pixi_config": {
+        "fill": {
+          "color": "0xffffff"
+        },
+        "line": {
+          "width": 2,
+          "color": "0xff00ff"
+        }
+      }
+    }
+  },
+  {
+    "id": "vert",
+    "amount": 1,
+    "type": "vertices",
+    "config": {
+      "position": {
+        "x": 100,
+        "y": 130
+      },
+      "vertices": [
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 300,
+          "y": 200
+        },
+        {
+          "x": 400,
+          "y": 200
+        },
+        {
+          "x": 550,
+          "y": 0
+        },
+        {
+          "x": 300,
+          "y": 0
+        },
+        {
+          "x": 300,
+          "y": 100
+        },
+        {
+          "x": 100,
+          "y": 0
+        }
+      ],
+      "matter_config": {
+        "chamfer": {
+          "radius": 10
+        }
       },
       "pixi_config": {
         "fill": {

@@ -8,25 +8,37 @@ export class Circle extends Shape {
     this._config = {
       ...this._config,
       diameter: 10,
-      ...config
+      ...config,
     };
     this.init();
   }
 
   init() {
+    this.doMatter();
+    this.doPixi();
+  }
+
+  doMatter() {
     const matter = Matter.Bodies.circle(
       this._config.position.x,
       this._config.position.y,
       this._config.diameter / 2,
       {
-        ...this._config.matter_config
+        ...this._config.matter_config,
       }
     );
     this._matter = matter;
 
+    matter.isInitialised = true;
+  }
+
+  doPixi() {
+    const matter = this._matter;
+    if (!matter.isInitialised) return;
+
     const pixi = new PIXI.Graphics();
     this._pixi = pixi;
-    this.style();
+    this.doPixiStyle();
     // Q: Position has to be "0" to match with Matter updates - but why exactly?
     // A(?):
     // Because "Graphic" can be more than a circle and it's like a bunch of components instead of just the circle?
@@ -37,7 +49,7 @@ export class Circle extends Shape {
     // Use matter instead of diameter to account for other things like chamfer
     pixi.drawCircle(0, 0, (matter.bounds.max.x - matter.bounds.min.x) / 2);
     pixi.endFill();
-  }
 
-  draw() {} //??
+    pixi.isInitialised = true;
+  }
 }

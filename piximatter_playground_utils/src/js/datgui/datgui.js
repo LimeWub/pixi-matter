@@ -5,6 +5,8 @@ import * as dat from "dat.gui";
 
 // SVG?: https://stackoverflow.com/questions/23417991/load-a-file-using-a-dat-gui-button
 
+// https://github.com/dataarts/dat.gui/blob/master/API.md
+
 // dat boi needs the f l a t
 const settings = [
 {name: "bg", type: "lines"}
