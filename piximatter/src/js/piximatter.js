@@ -4,6 +4,7 @@ import { Circle } from "./shapes/circle.js";
 import { Rectangle } from "./shapes/rectangle.js";
 import { Polygon } from "./shapes/polygon.js";
 import { Vertices } from "./shapes/vertices.js";
+import { Trapezoid } from "./shapes/trapezoid.js";
 import { getWallsData } from "./_util/getWallsData.js";
 // var pathseg = require("pathseg"); // I think Matter needs this?
 
@@ -70,6 +71,7 @@ export const PixiMatter = function ({
 
   this.initDOM = () => {
     element.classList.add(BLOCK_ELEMENT_CLASSNAME);
+    this._dom.element = element;
 
     const message = document.createElement("div");
     message.classList.add(`${BLOCK_ELEMENT_CLASSNAME}__message`);
@@ -170,6 +172,9 @@ export const PixiMatter = function ({
       case "rectangle":
         b = new Rectangle({ config: data.config });
         break;
+      case "trapezoid":
+          b = new Trapezoid({ config: data.config });
+          break;
       case "polygon":
         b = new Polygon({ config: data.config });
         break;

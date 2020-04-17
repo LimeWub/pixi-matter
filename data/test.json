@@ -74,6 +74,30 @@
     }
   },
   {
+    "id": "trap",
+    "amount": 3,
+    "type": "trapezoid",
+    "config": {
+      "width": 50,
+      "height": 80,
+      "slope": 7,
+      "position": {
+        "x": 130,
+        "y": 130
+      },
+      "matter_config": {},
+      "pixi_config": {
+        "fill": {
+          "color": "0xffffff"
+        },
+        "line": {
+          "width": 2,
+          "color": "0xff00ff"
+        }
+      }
+    }
+  },
+  {
     "id": "vert",
     "amount": 1,
     "type": "vertices",
