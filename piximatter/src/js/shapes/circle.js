@@ -29,6 +29,8 @@ export class Circle extends Shape {
     );
     this._matter = matter;
 
+    Matter.World.add(this._config.matter_config.parentContainer, matter);
+
     matter.isInitialised = true;
   }
 
@@ -37,7 +39,9 @@ export class Circle extends Shape {
     if (!matter.isInitialised) return;
 
     const pixi = new PIXI.Graphics();
+    const config = this._config.pixi_config;
     this._pixi = pixi;
+    pixi.initialRotation = -matter.angle;
     this.doPixiStyle();
     // Q: Position has to be "0" to match with Matter updates - but why exactly?
     // A(?):
@@ -49,6 +53,8 @@ export class Circle extends Shape {
     // Use matter instead of diameter to account for other things like chamfer
     pixi.drawCircle(0, 0, (matter.bounds.max.x - matter.bounds.min.x) / 2);
     pixi.endFill();
+
+    config.parentContainer.addChild(pixi);
 
     pixi.isInitialised = true;
   }

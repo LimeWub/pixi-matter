@@ -6,7 +6,7 @@ import { Polygon } from "./shapes/polygon.js";
 import { Vertices } from "./shapes/vertices.js";
 import { Trapezoid } from "./shapes/trapezoid.js";
 import { getWallsData } from "./_util/getWallsData.js";
-// var pathseg = require("pathseg"); // I think Matter needs this?
+// var pathseg = require('pathseg'); // I think Matter needs this?
 
 import "../scss/styles.scss";
 
@@ -118,9 +118,8 @@ export const PixiMatter = function ({
     const bcr = this._element.boundingClientRect;
 
     const engine = Matter.Engine.create();
-    engine.world.gravity.scale = 0.3;
-    engine.world.gravity.x = 0;
-    engine.world.gravity.y = 0.1;
+    this._matter.engine = engine;
+    this.doMatterGravity({ gravityConfig: matter_config.gravity });
 
     // if (debug) { // opacity: 1 }
     const renderer = Matter.Render.create({
@@ -135,6 +134,7 @@ export const PixiMatter = function ({
         wireframeBackground: "transparent",
       },
     });
+    this._matter.renderer = renderer;
     Matter.Render.run(renderer);
 
     // add mouse control
@@ -148,21 +148,38 @@ export const PixiMatter = function ({
           },
         },
       });
-
     Matter.World.add(engine.world, mouseConstraint);
-
     // keep the mouse in sync with rendering
     renderer.mouse = mouse;
-
-    this._matter.engine = engine;
-    this._matter.renderer = renderer;
   };
 
-  this.addBody = ({ data, parentContainer: pc }) => {
-    const app = this._pixi.app;
-    const parentContainer = pc || app.stage;
-
+  this.doMatterGravity = ({ gravityConfig }) => {
     const engine = this._matter.engine;
+    engine.world.gravity = { ...engine.world.gravity, ...gravityConfig };
+  };
+
+  this.randomizeBodiesPosition = () => {
+    const bodies = this._bodies;
+    const renderer = this._matter.renderer;
+
+    const randomizer = (bodies) => {
+      bodies.forEach((b) => {
+        if (b.type === "collection") {
+          randomizer(b.bodies);
+          return; // END IT HERE FOR `collection`
+        }
+        b.shape.randomizePosition(renderer.bounds);
+      });
+    };
+
+    randomizer(bodies);
+  };
+
+  this.addBody = ({ data, pixiParentContainer: pc }) => {
+    const app = this._pixi.app;
+    const engine = this._matter.engine;
+    data.config.pixi_config.parentContainer = pc || app.stage; // ._.
+    data.config.matter_config.parentContainer = engine.world; // ._.
 
     let b;
     switch (data.type) {
@@ -173,8 +190,8 @@ export const PixiMatter = function ({
         b = new Rectangle({ config: data.config });
         break;
       case "trapezoid":
-          b = new Trapezoid({ config: data.config });
-          break;
+        b = new Trapezoid({ config: data.config });
+        break;
       case "polygon":
         b = new Polygon({ config: data.config });
         break;
@@ -188,16 +205,12 @@ export const PixiMatter = function ({
 
     if (!(b && b._matter.isInitialised && b._pixi.isInitialised)) return;
 
-    Matter.World.add(engine.world, b._matter);
-    b._pixi.parentContainer = parentContainer;
-    parentContainer.addChild(b._pixi);
-
     return { id: data.id, type: data.type, shape: b };
   };
 
-  this.addBodies = ({ data }) => {
+  this.addBodies = ({ data, pixiParentContainer: pc }) => {
     const app = this._pixi.app;
-    const parentContainer = app.stage; // (!): No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
+    const pixiParentContainer = pc || app.stage; // (!): No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
     const bodies = this._bodies;
 
     const adder = (data) => {
@@ -212,7 +225,7 @@ export const PixiMatter = function ({
           return; // END IT HERE FOR `collection`
         }
 
-        const body = this.addBody({ data: d, parentContainer });
+        const body = this.addBody({ data: d, pixiParentContainer });
         if (body) bodies.push(body);
       });
       return bodies;
@@ -226,9 +239,6 @@ export const PixiMatter = function ({
   };
 
   this.deleteBodies = ({ iteratee, greedy = true }) => {
-    const app = this._pixi.app;
-    const parentContainer = app.stage; // No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
-    const engine = this._matter.engine;
     const bodies = this._bodies;
     let matchCount = 0;
 
@@ -266,9 +276,7 @@ export const PixiMatter = function ({
         if (isMatch) {
           const shape = b.shape;
           // Goodbye cruel world.
-          Matter.World.remove(engine.world, shape._matter);
-          shape._pixi.parentContainer = parentContainer;
-          parentContainer.removeChild(shape._pixi);
+          shape.clear();
         } else {
           // Shantay you stay
           newBodies.push(b);
@@ -302,7 +310,6 @@ export const PixiMatter = function ({
       // We are now meeting the frame rate, so reset the last time the animation is done
       g_Time = timeNow;
 
-      // TMP:
       Matter.Engine.update(engine, delta * 1.6666); // Ummmm
 
       const ticker = (bodies) => {
@@ -368,7 +375,7 @@ export const PixiMatter = function ({
     this.isResizing = true;
     const message = this._dom.message;
 
-    //Show "Resizing" overlay so we can take
+    //Show 'Resizing' overlay so we can take
     // advantage of debouncing.
     message.textContent = copy.resize;
     message.style.display = "";
@@ -393,8 +400,8 @@ export const PixiMatter = function ({
 //     return Matter.Svg.pathToVertices(pathElement, 1);
 //   }
 
-//   const shapesSelection = document.getElementById("shapes-selection");
-//   const availablePaths = shapesSelection.querySelectorAll("path[id]");
+//   const shapesSelection = document.getElementById('shapes-selection');
+//   const availablePaths = shapesSelection.querySelectorAll('path[id]');
 //   for (let i = 0; i < availablePaths.length; i++) {
 //     app.shapes[availablePaths[i].id] = getShapeVertices(availablePaths[i]);
 //     app.shapes_keys.push(availablePaths[i].id);

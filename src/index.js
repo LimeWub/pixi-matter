@@ -8,5 +8,12 @@ const pm = new PixiMatter({
   debug: true,
   data,
   walls: true,
+  matter_config: {
+    gravity: {
+      scale: 0.1,
+      x: 0,
+      y: 0.1,
+    },
+  },
 });
 new PixiMatterGui({ PixiMatterObject: pm });

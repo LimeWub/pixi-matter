@@ -20,12 +20,33 @@ export class Shape {
     return Matter.Bounds.overlaps(rendererBounds, shapeBounds);
   }
 
+  setPosition(point = {}) {
+    if (this._matter.isStatic) return; // position set onInit ONLY (@TODO: separate)
+    Matter.Body.setPosition(this._matter, point);
+    this.clearPixi();
+    this.doPixi();
+  }
+
+  randomizePosition(rendererBounds) {
+    this.setPosition({
+      x:
+        rendererBounds.min.x +
+        Math.random() * (rendererBounds.max.x - rendererBounds.min.x),
+      y:
+        rendererBounds.min.y +
+        Math.random() * (rendererBounds.max.y - rendererBounds.min.y),
+    });
+  }
+
   doPixi() {
     const matter = this._matter;
     if (!matter.isInitialised) return;
 
     const pixi = new PIXI.Graphics();
+    const config = this._config.pixi_config;
     this._pixi = pixi;
+    pixi.initialRotation = -matter.angle;
+
 
     this.doPixiStyle();
 
@@ -55,6 +76,8 @@ export class Shape {
       pixi.closePath();
     });
 
+    config.parentContainer.addChild(pixi);
+
     pixi.isInitialised = true;
   }
 
@@ -78,10 +101,23 @@ export class Shape {
     }
   }
 
+  clear() {
+    this.clearMatter();
+    this.clearPixi();
+  }
+
+  clearMatter() {
+    const matter = this._matter;
+    const config = this._config.matter_config;
+    if (!matter.isInitialised) return;
+    Matter.World.remove(config.parentContainer, matter);
+  }
+
   clearPixi() {
     const pixi = this._pixi;
+    const config = this._config.pixi_config;
     if (!pixi.isInitialised) return;
-    pixi.parentContainer.removeChild(pixi);
+    config.parentContainer.removeChild(pixi);
   }
 
   onUpdateMatterConfig() {}
@@ -96,7 +132,7 @@ export class Shape {
     const pixi = this._pixi;
 
     // Rotation
-    pixi.rotation = matter.angle;
+    pixi.rotation = pixi.initialRotation + matter.angle;
 
     // Position
     pixi.position.x = matter.position.x;

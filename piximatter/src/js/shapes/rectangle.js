@@ -28,6 +28,8 @@ export class Rectangle extends Shape {
     );
     this._matter = matter;
 
+
+    Matter.World.add(this._config.matter_config.parentContainer, matter);
     matter.isInitialised = true;
   }
 }

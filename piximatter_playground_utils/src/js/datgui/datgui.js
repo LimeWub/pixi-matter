@@ -7,9 +7,6 @@ import * as dat from "dat.gui";
 
 // https://github.com/dataarts/dat.gui/blob/master/API.md
 
-// dat boi needs the f l a t
-const settings = [{ name: "bg", type: "lines" }];
-
 export class PixiMatterGui {
   constructor({ PixiMatterObject: pmo }) {
     this._pmo = pmo;
@@ -35,27 +32,26 @@ export class PixiMatterGui {
   }
 
   initGUISkeleton() {
-    console.log(this.gui);
     // [Metrics]
     this.guiMetrics = this.gui.addFolder("Metrics");
+    this.guiMetrics.open();
     // [Add Shape]
     this.guiAddShape = this.gui.addFolder("Add Shape");
+    this.guiAddShape.open();
     this.guiAddShapeMatter = this.guiAddShape.addFolder("Matter");
+    this.guiAddShapeMatter.open();
     this.guiAddShapePixi = this.guiAddShape.addFolder("Pixi");
     // [World]
     this.guiWorld = this.gui.addFolder("World");
+    this.guiWorld.open();
     this.guiWorldGravity = this.guiWorld.addFolder("Gravity");
-    this.guiWorldEngine = this.guiWorld.addFolder("Engine");
+    // this.guiWorldEngine = this.guiWorld.addFolder("Engine");
   }
 
   // [Metrics]
   initMetrics() {
     this.initMetricsConfig();
     this.setupMetricsFields();
-    this.guiMetrics.open();
-
-    // tmp
-    this.removeMetricsFields();
   }
 
   initMetricsConfig() {
@@ -75,11 +71,6 @@ export class PixiMatterGui {
       .onFinishChange(() => console.log("toggleDebug"));
   }
 
-  removeMetricsFields() {
-    const guiMetrics = this.guiMetrics;
-    console.log({ guiMetrics }); // @TODO
-  }
-
   // [Add Shape]
   initAddShape() {
     this.initAddShapeConfig();
@@ -94,6 +85,30 @@ export class PixiMatterGui {
       type: "circle",
       addShape: () => {
         console.log("addShape");
+        this._pmo.addBody({
+          data: {
+            amount: this.addShape.amount,
+            type: this.addShape.type,
+            config: {
+              ...this.addShapeMatterType,
+              matter_config: {
+                ...this.addShapeMatter,
+                chamfer: { radius: this.addShapeMatter.chamfer },
+              },
+              pixi_config: {
+                fill: {
+                  color: this.addShapePixi.fillColor.replace("#", "0x"),
+                  alpha: this.addShapePixi.fillAlpha,
+                },
+                line: {
+                  color: this.addShapePixi.lineColor.replace("#", "0x"),
+                  alpha: this.addShapePixi.lineAlpha,
+                  width: this.addShapePixi.lineWidth,
+                },
+              },
+            },
+          },
+        });
       },
     };
   }
@@ -128,13 +143,14 @@ export class PixiMatterGui {
       .add(this.addShape, "type", [
         "circle",
         "rectangle",
+        "trapezoid",
         "polygon",
         "vertices",
       ])
-      .onFinishChange(() =>
-        console.log("removeAddShapeMatterFields, setupAddShapeMatterFields")
-      );
-    dd.setValue("circle"); // pls
+      .onFinishChange((newValue) => {
+        this.clearFields(this.guiAddShapeMatter);
+        this.setupAddShapeMatterFields();
+      });
 
     this.setupAddShapeMatterFields({});
     this.setupAddShapePixiFields();
@@ -143,9 +159,9 @@ export class PixiMatterGui {
     guiAddShape.add(this.addShape, "addShape");
   }
 
-  setupAddShapeMatterFields({ type }) {
+  setupAddShapeMatterFields() {
     const guiAddShapeMatter = this.guiAddShapeMatter;
-
+    const { type } = this.addShape;
     switch (type) {
       case "rectangle":
         this.addShapeMatterType = {
@@ -218,19 +234,26 @@ export class PixiMatterGui {
   initWorldConfig() {
     this.world = {
       shuffle: () => {
+        this._pmo.randomizeBodiesPosition();
         console.log("suffle");
       },
       clear: () => {
+        this._pmo.deleteBodies({ iteratee: () => true });
+        // @TODO: MARK BODIES THAT CAN'T BE DELETED
         console.log("clear");
-      }
+      },
     };
   }
 
   initWorldGravityConfig() {
+    const currWorldGravityConfig =
+      this._pmo._matter?.engine?.world?.gravity || {};
+    console.log({ currWorldGravityConfig });
     this.worldGravity = {
-      scale: .001, // 0 -
+      scale: 0.001, // 0 -
       x: 0, // -1 - 1
       y: 1, // same
+      ...currWorldGravityConfig,
     };
   }
 
@@ -245,7 +268,7 @@ export class PixiMatterGui {
   // initWorldEngineConfig() {
   //   this.worldEngine = {
   //     enableSleeping: false,
-  //     timeScale: 1, 
+  //     timeScale: 1,
   //     scale: 0.001, // 0 -
   //     x: 0, // -1 - 1
   //     y: 1, // same
@@ -254,8 +277,6 @@ export class PixiMatterGui {
 
   setupWorldFields() {
     const guiWorld = this.guiWorld;
-
-
     this.setupWorldGravityConfig();
 
     // *shuffle*
@@ -266,8 +287,31 @@ export class PixiMatterGui {
 
   setupWorldGravityConfig() {
     const guiWorldGravity = this.guiWorldGravity;
-    guiWorldGravity.add(this.worldGravity, "scale", 0, .001, 0.0001);
-    guiWorldGravity.add(this.worldGravity, "x", -1, 1, 0.1);
-    guiWorldGravity.add(this.worldGravity, "y", -1, 1, 0.1);
+
+    const updateWorldGravity = () =>
+      this._pmo.doMatterGravity({
+        gravityConfig: {
+          scale: this.worldGravity.scale,
+          x: this.worldGravity.x,
+          y: this.worldGravity.y,
+        },
+      });
+
+    guiWorldGravity
+      .add(this.worldGravity, "scale", 0, 0.1, 0.001)
+      .onFinishChange(updateWorldGravity);
+    guiWorldGravity
+      .add(this.worldGravity, "x", -1, 1, 0.1)
+      .onFinishChange(updateWorldGravity);
+    guiWorldGravity
+      .add(this.worldGravity, "y", -1, 1, 0.1)
+      .onFinishChange(updateWorldGravity);
+  }
+
+  clearFields(gui) {
+    const fields = gui.__controllers; // Ye, I know this is dodgy af but that's what I have available.
+    while (fields.length) {
+      gui.remove(fields[0]);
+    }
   }
 }
