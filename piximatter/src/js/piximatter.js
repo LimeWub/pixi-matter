@@ -324,8 +324,8 @@ export const PixiMatter = function ({
     // Pixi
     app.renderer.resize(bcr.width, bcr.height);
     // Matter
-    renderer.canvas.width = bcr.width;
-    renderer.canvas.height = bcr.height;
+    renderer.bounds.max.x = renderer.canvas.width = bcr.width;
+    renderer.bounds.max.y = renderer.canvas.height = bcr.height;
 
     //Then loop through all the stage children
     let stageChildren = app.stage.children;
