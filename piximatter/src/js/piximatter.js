@@ -142,7 +142,7 @@ export const PixiMatter = function ({
       mouseConstraint = Matter.MouseConstraint.create(engine, {
         mouse: mouse,
         constraint: {
-          stiffness: 0.2,
+          stiffness: 0.01,
           render: {
             visible: true,
           },
@@ -238,7 +238,7 @@ export const PixiMatter = function ({
     this.deleteBodies({ iteratee, greedy: false });
   };
 
-  this.deleteBodies = ({ iteratee, greedy = true }) => {
+   this.deleteBodies = ({ iteratee, greedy = true }) => {
     const bodies = this._bodies;
     let matchCount = 0;
 
@@ -293,24 +293,24 @@ export const PixiMatter = function ({
     this.addBodies({ data });
   };
 
+  this.exportJSON = () => {
+    // @TODO: export entire configuration. inc bodies (position, rotation etc), world, pixi etc
+  }
+
+  this.setFPS = (fps = 60) => {
+    const app = this._pixi.app;
+    app.ticker.maxFPS = fps;
+  };
+
   this.initTicker = () => {
     const app = this._pixi.app;
     const engine = this._matter.engine;
     const renderer = this._matter.renderer;
-    const g_TICK = 33.333; // 1000/40 = 25 frames per second
-    let g_Time = 0;
 
-    // Listen for animate update
-    app.ticker.add((delta) => {
+    const onTick = (delta) => {
       if (this.isResizing) return; // Don't do anything if resizing.
-      // Limit to the frame rate
-      const timeNow = new Date().getTime();
-      const timeDiff = timeNow - g_Time;
-      if (timeDiff < g_TICK) return;
-      // We are now meeting the frame rate, so reset the last time the animation is done
-      g_Time = timeNow;
 
-      Matter.Engine.update(engine, delta * 1.6666); // Ummmm
+      Matter.Engine.update(engine, delta);
 
       const ticker = (bodies) => {
         bodies.forEach((b) => {
@@ -327,7 +327,14 @@ export const PixiMatter = function ({
           }
         });
       };
+
       ticker(this._bodies);
+    };
+
+    app.ticker.add((delta) => {
+      if (this.stats) this.stats.begin();
+      onTick(delta);
+      if (this.stats) this.stats.end();
     });
 
     app.ticker.start();

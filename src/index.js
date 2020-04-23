@@ -1,8 +1,8 @@
 import { PixiMatter } from "../piximatter/src/js/piximatter.js";
-import { PixiMatterGui } from "../piximatter_playground_utils/src/js/datgui/datgui.js";
+import { PixiMatterGui } from "../piximatter_playground_utils/datgui/src/js/datgui.js";
+import { PixiMatterStats } from "../piximatter_playground_utils/stats/src/js/stats.js";
 import data from "../data/test.json";
 
-console.log("hello world");
 const pm = new PixiMatter({
   element: document.getElementById("piximatter-placeholder-1"),
   debug: true,
@@ -17,3 +17,4 @@ const pm = new PixiMatter({
   },
 });
 new PixiMatterGui({ PixiMatterObject: pm });
+new PixiMatterStats({ PixiMatterObject: pm });

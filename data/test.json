@@ -15,11 +15,13 @@
       },
       "pixi_config": {
         "fill": {
-          "color": "0xffffff"
+          "color": "0xffffff",
+          "alpha": 1
         },
         "line": {
           "width": 2,
-          "color": "0xff00ff"
+          "color": "0xff00ff",
+          "alpha": 1
         }
       }
     }
@@ -43,7 +45,8 @@
         },
         "line": {
           "width": 2,
-          "color": "0xff00ff"
+          "color": "0xff00ff",
+          "alpha": 1
         }
       }
     }
@@ -64,7 +67,8 @@
       },
       "pixi_config": {
         "fill": {
-          "color": "0xffffff"
+          "color": "0xffffff",
+          "alpha": 1
         },
         "line": {
           "width": 2,
@@ -92,7 +96,8 @@
         },
         "line": {
           "width": 2,
-          "color": "0xff00ff"
+          "color": "0xff00ff",
+          "alpha": 1
         }
       }
     }
@@ -143,11 +148,13 @@
       },
       "pixi_config": {
         "fill": {
-          "color": "0xffffff"
+          "color": "0xffffff",
+          "alpha": 1
         },
         "line": {
           "width": 2,
-          "color": "0xff00ff"
+          "color": "0xff00ff",
+          "alpha": 1
         }
       }
     }

@@ -47,7 +47,6 @@ export class Shape {
     this._pixi = pixi;
     pixi.initialRotation = -matter.angle;
 
-
     this.doPixiStyle();
 
     const matterParts = matter.parts;
@@ -85,20 +84,13 @@ export class Shape {
     const pixi = this._pixi;
     const config = this._config.pixi_config;
 
-    // Fill Style
-    if (config.fill) {
-      const fillColor = config.fill.color || "0xffffff";
-      pixi.beginFill(fillColor);
-    }
-
-    // Line Style
-    if (config.line) {
-      const lineWidth = config.line.width || 1;
-      const lineColor = config.line.color || "0xffffff";
-      const lineAlpha = config.line.alpha || 1;
-      const lineAlignment = 0;
-      pixi.lineStyle(lineWidth, lineColor, lineAlpha, lineAlignment);
-    }
+    pixi.beginFill(config.fill?.color || "0xffffff", config.fill?.alpha || 0);
+    pixi.lineStyle(
+      config.line?.width || 1,
+      config.line?.color || "0xffffff",
+      config.line?.alpha || 0,
+      0
+    );
   }
 
   clear() {

@@ -1,4 +1,5 @@
 import * as dat from "dat.gui";
+import "../scss/styles.scss";
 // Christ
 // https://workshop.chromeexperiments.com/examples/guiVR/#1--Basic-Usage
 // https://codepen.io/supah/pen/prVVOx?editors=0010
@@ -15,14 +16,7 @@ export class PixiMatterGui {
 
   init() {
     this.gui = new dat.GUI({ autoPlace: false, useLocalStorage: true });
-    this.gui.domElement.style.cssText = `${this.gui.domElement.style.cssText};
-    max-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    position: absolute;
-    right: 0;
-    top: 0;
-    `;
+    this.gui.domElement.classList.add('piximatter-gui');
     this._pmo._dom.element.appendChild(this.gui.domElement);
 
     this.initGUISkeleton();
@@ -64,7 +58,7 @@ export class PixiMatterGui {
   setupMetricsFields() {
     const guiMetrics = this.guiMetrics;
     guiMetrics
-      .add(this.metrics, "fps", 0, 120)
+      .add(this.metrics, "fps", 0, 60)
       .onFinishChange(() => console.log("fps"));
     guiMetrics
       .add(this.metrics, "debug")
@@ -84,30 +78,32 @@ export class PixiMatterGui {
       amount: 1,
       type: "circle",
       addShape: () => {
-        console.log("addShape");
-        this._pmo.addBody({
-          data: {
-            amount: this.addShape.amount,
-            type: this.addShape.type,
-            config: {
-              ...this.addShapeMatterType,
-              matter_config: {
-                ...this.addShapeMatter,
-                chamfer: { radius: this.addShapeMatter.chamfer },
+        const data = {
+          amount: this.addShape.amount,
+          type: this.addShape.type,
+          config: {
+            ...this.addShapeMatterType,
+            matter_config: {
+              ...this.addShapeMatter,
+              chamfer: { radius: this.addShapeMatter.chamfer },
+            },
+            pixi_config: {
+              fill: {
+                color: this.addShapePixi.fillColor.replace("#", "0x"),
+                alpha: this.addShapePixi.fillAlpha,
               },
-              pixi_config: {
-                fill: {
-                  color: this.addShapePixi.fillColor.replace("#", "0x"),
-                  alpha: this.addShapePixi.fillAlpha,
-                },
-                line: {
-                  color: this.addShapePixi.lineColor.replace("#", "0x"),
-                  alpha: this.addShapePixi.lineAlpha,
-                  width: this.addShapePixi.lineWidth,
-                },
+              line: {
+                color: this.addShapePixi.lineColor.replace("#", "0x"),
+                alpha: this.addShapePixi.lineAlpha,
+                width: this.addShapePixi.lineWidth,
               },
             },
           },
+        };
+console.log(data);
+return;
+        this._pmo.addBody({
+          data,
         });
       },
     };
@@ -248,7 +244,6 @@ export class PixiMatterGui {
   initWorldGravityConfig() {
     const currWorldGravityConfig =
       this._pmo._matter?.engine?.world?.gravity || {};
-    console.log({ currWorldGravityConfig });
     this.worldGravity = {
       scale: 0.001, // 0 -
       x: 0, // -1 - 1
