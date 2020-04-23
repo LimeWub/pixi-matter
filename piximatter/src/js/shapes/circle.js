@@ -7,7 +7,7 @@ export class Circle extends Shape {
     super({ config });
     this._config = {
       ...this._config,
-      diameter: 10,
+      radius: 5,
       ...config,
     };
     this.init();
@@ -22,7 +22,7 @@ export class Circle extends Shape {
     const matter = Matter.Bodies.circle(
       this._config.position.x,
       this._config.position.y,
-      this._config.diameter / 2,
+      this._config.radius,
       {
         ...this._config.matter_config,
       }
@@ -50,7 +50,7 @@ export class Circle extends Shape {
     // https://github.com/pixijs/pixi.js/issues/2589
     // (!) Circles in PIXI draw from the center
     // https://pixijs.download/dev/docs/PIXI.Graphics.html
-    // Use matter instead of diameter to account for other things like chamfer
+    // Use matter instead of radius to account for other things like chamfer
     pixi.drawCircle(0, 0, (matter.bounds.max.x - matter.bounds.min.x) / 2);
     pixi.endFill();
 

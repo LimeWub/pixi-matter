@@ -15,8 +15,9 @@ export class PixiMatterGui {
   }
 
   init() {
-    this.gui = new dat.GUI({ autoPlace: false, useLocalStorage: true });
-    this.gui.domElement.classList.add('piximatter-gui');
+    this.gui = new dat.GUI({ autoPlace: false, useLocalStorage: true, closeOnTop: true });
+    this.gui.close();
+    this.gui.domElement.classList.add("piximatter-gui");
     this._pmo._dom.element.appendChild(this.gui.domElement);
 
     this.initGUISkeleton();
@@ -49,9 +50,11 @@ export class PixiMatterGui {
   }
 
   initMetricsConfig() {
+    const currFPSConfig = this._pmo._pixi?.app?.ticker?.maxFPS || 60;
+    const currDebugConfig = !!this._pmo._debug;
     this.metrics = {
-      fps: 60,
-      debug: false,
+      fps: currFPSConfig,
+      debug: currDebugConfig,
     };
   }
 
@@ -59,10 +62,10 @@ export class PixiMatterGui {
     const guiMetrics = this.guiMetrics;
     guiMetrics
       .add(this.metrics, "fps", 0, 60)
-      .onFinishChange(() => console.log("fps"));
+      .onFinishChange((newValue) => this._pmo.doFPS(newValue));
     guiMetrics
       .add(this.metrics, "debug")
-      .onFinishChange(() => console.log("toggleDebug"));
+      .onFinishChange((newValue) => this._pmo.toggleDebug(newValue));
   }
 
   // [Add Shape]
@@ -100,8 +103,8 @@ export class PixiMatterGui {
             },
           },
         };
-console.log(data);
-return;
+        console.log(data);
+        // return;
         this._pmo.addBody({
           data,
         });
@@ -231,12 +234,10 @@ return;
     this.world = {
       shuffle: () => {
         this._pmo.randomizeBodiesPosition();
-        console.log("suffle");
       },
       clear: () => {
         this._pmo.deleteBodies({ iteratee: () => true });
         // @TODO: MARK BODIES THAT CAN'T BE DELETED
-        console.log("clear");
       },
     };
   }

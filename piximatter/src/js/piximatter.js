@@ -121,7 +121,6 @@ export const PixiMatter = function ({
     this._matter.engine = engine;
     this.doMatterGravity({ gravityConfig: matter_config.gravity });
 
-    // if (debug) { // opacity: 1 }
     const renderer = Matter.Render.create({
       canvas: this._dom.matter,
       engine: engine,
@@ -129,7 +128,9 @@ export const PixiMatter = function ({
         width: bcr.width,
         height: bcr.height,
         wireframes: true,
-        showAngleIndicator: false,
+        showVelocity: true,
+        showCollisions: true,
+        showAngleIndicator: true,
         background: "transparent",
         wireframeBackground: "transparent",
       },
@@ -162,17 +163,9 @@ export const PixiMatter = function ({
     const bodies = this._bodies;
     const renderer = this._matter.renderer;
 
-    const randomizer = (bodies) => {
-      bodies.forEach((b) => {
-        if (b.type === "collection") {
-          randomizer(b.bodies);
-          return; // END IT HERE FOR `collection`
-        }
-        b.shape.randomizePosition(renderer.bounds);
-      });
-    };
-
-    randomizer(bodies);
+    bodies.forEach((b) => {
+      b.shape.randomizePosition(renderer.bounds);
+    });
   };
 
   this.addBody = ({ data, pixiParentContainer: pc }) => {
@@ -180,65 +173,52 @@ export const PixiMatter = function ({
     const engine = this._matter.engine;
     data.config.pixi_config.parentContainer = pc || app.stage; // ._.
     data.config.matter_config.parentContainer = engine.world; // ._.
-
     let b;
-    switch (data.type) {
-      case "circle":
-        b = new Circle({ config: data.config });
-        break;
-      case "rectangle":
-        b = new Rectangle({ config: data.config });
-        break;
-      case "trapezoid":
-        b = new Trapezoid({ config: data.config });
-        break;
-      case "polygon":
-        b = new Polygon({ config: data.config });
-        break;
-      case "vertices":
-        b = new Vertices({ config: data.config });
-        break;
-      default:
-        console.log("SAD");
-        return;
+    for (let i = 0; i < (data.amount || 1); i++) {
+      switch (data.type) {
+        case "circle":
+          b = new Circle({ config: data.config });
+          break;
+        case "rectangle":
+          b = new Rectangle({ config: data.config });
+          break;
+        case "trapezoid":
+          b = new Trapezoid({ config: data.config });
+          break;
+        case "polygon":
+          b = new Polygon({ config: data.config });
+          break;
+        case "vertices":
+          b = new Vertices({ config: data.config });
+          break;
+        default:
+          console.log("SAD");
+          return;
+      }
+
+      if (!(b && b._matter.isInitialised && b._pixi.isInitialised)) return;
+
+      this._bodies = [
+        ...this._bodies,
+        { id: data.id, type: data.type, tags: data.tags || [], shape: b },
+      ];
     }
-
-    if (!(b && b._matter.isInitialised && b._pixi.isInitialised)) return;
-
-    return { id: data.id, type: data.type, shape: b };
   };
 
   this.addBodies = ({ data, pixiParentContainer: pc }) => {
     const app = this._pixi.app;
     const pixiParentContainer = pc || app.stage; // (!): No child containers MOFO (can bundle at 'stageContent' level otherwise f'off)
-    const bodies = this._bodies;
 
-    const adder = (data) => {
-      const bodies = [];
-      data.forEach((d) => {
-        if (d.type === "collection") {
-          bodies.push({
-            id: d.id,
-            type: d.type,
-            bodies: adder(d.config.bodies),
-          });
-          return; // END IT HERE FOR `collection`
-        }
-
-        const body = this.addBody({ data: d, pixiParentContainer });
-        if (body) bodies.push(body);
-      });
-      return bodies;
-    };
-
-    this._bodies = [...bodies, ...adder(data)];
+    data.forEach((d) => {
+      this.addBody({ data: d, pixiParentContainer });
+    });
   };
 
   this.deleteBody = ({ iteratee }) => {
     this.deleteBodies({ iteratee, greedy: false });
   };
 
-   this.deleteBodies = ({ iteratee, greedy = true }) => {
+  this.deleteBodies = ({ iteratee, greedy = true }) => {
     const bodies = this._bodies;
     let matchCount = 0;
 
@@ -254,23 +234,6 @@ export const PixiMatter = function ({
         // BAU
         const isMatch = iteratee(b);
         if (isMatch) matchCount++;
-
-        // (!) Special type: Collection
-        if (b.type === "collection") {
-          // if it's a match; delete all children 🔫
-          let i = iteratee;
-          if (isMatch) {
-            i = () => true; // all
-            matchCount -= b.bodies.length; // child bodies of a matched collection should be deleted regardless of `greedy` setting
-          }
-          const newCollectionBodies = deleter(b.bodies, i);
-
-          // are there still bodies left in this collection?
-          if (newCollectionBodies.length) {
-            newBodies.push({ ...b, bodies: newCollectionBodies });
-          }
-          return;
-        }
 
         // Does the current body match the filter?
         if (isMatch) {
@@ -295,9 +258,15 @@ export const PixiMatter = function ({
 
   this.exportJSON = () => {
     // @TODO: export entire configuration. inc bodies (position, rotation etc), world, pixi etc
-  }
+  };
 
-  this.setFPS = (fps = 60) => {
+  this.toggleDebug = (force) => {
+    const renderer = this._matter.renderer;
+    this._debug = typeof force !== "undefined" ? !!force : !this._debug;
+    renderer.canvas.style.opacity = this._debug ? 1 : 0;
+  };
+
+  this.doFPS = (fps = 60) => {
     const app = this._pixi.app;
     app.ticker.maxFPS = fps;
   };
@@ -314,16 +283,10 @@ export const PixiMatter = function ({
 
       const ticker = (bodies) => {
         bodies.forEach((b) => {
-          // (!) Special: Collection
-          if (b.type === "collection") {
-            ticker(b.bodies);
-            return;
-          }
-
           const shape = b.shape;
           shape.fromMatterToPixi();
           if (!shape.isInBounds(renderer.bounds)) {
-            this.deleteBodies({ iteratee: (body) => body.id === b.id });
+            this.deleteBody({ iteratee: (body) => body.id === b.id });
           }
         });
       };
@@ -332,10 +295,12 @@ export const PixiMatter = function ({
     };
 
     app.ticker.add((delta) => {
+      if (app.ticker.maxFPS === 0) return; // Freeze.
       if (this.stats) this.stats.begin();
       onTick(delta);
       if (this.stats) this.stats.end();
     });
+    this.doFPS();
 
     app.ticker.start();
   };
@@ -350,10 +315,9 @@ export const PixiMatter = function ({
     const bcr = element.getBoundingClientRect();
     this._element.bcr = bcr; // update bcr
 
-    this.deleteBodies({ iteratee: (b) => b.id === "walls" });
+    this.deleteBodies({ iteratee: (b) => b.tags.includes("walls") });
     if (walls) {
       this.addBodies({ data: getWallsData(bcr) });
-      console.log(this._bodies);
     }
 
     //Resize renderer

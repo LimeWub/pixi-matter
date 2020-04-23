@@ -4,7 +4,7 @@
     "amount": 1,
     "type": "polygon",
     "config": {
-      "diameter": 120,
+      "radius": 120,
       "sides": 6,
       "position": {
         "x": 100,
@@ -31,7 +31,7 @@
     "amount": 1,
     "type": "circle",
     "config": {
-      "diameter": 100,
+      "radius": 100,
       "position": {
         "x": 100,
         "y": 130

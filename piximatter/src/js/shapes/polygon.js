@@ -6,7 +6,7 @@ export class Polygon extends Shape {
     super({ config });
     this._config = {
       ...this._config,
-      diameter: 10,
+      radius: 10,
       sides: 3,
       ...config
     };
@@ -23,7 +23,7 @@ export class Polygon extends Shape {
       this._config.position.x,
       this._config.position.y,
       this._config.sides,
-      this._config.diameter / 2,
+      this._config.radius / 2,
       {
         ...this._config.matter_config
       }
